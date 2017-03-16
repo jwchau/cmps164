@@ -65,12 +65,17 @@ end
 function agario_collide(a,b)
 	if (a.r >= b.r) then 
 		a.r += b.r/20
+		b.r = 0
 		del(hearts,b)
 		del(collisions,b)
  else
 		b.r += a.r/20
+		a.r = 0
 		del(hearts, a)
 		del(collisions,a)
+	end
+	if (pl.r == 0) then
+	 pl = make_player(0,rnd(map_size),rnd(map_size),start_size)
 	end
 end
 
@@ -159,9 +164,10 @@ function query(q)
 end
 
 map_size = 2^(8)
+start_size = 4
 --acceleration stuff
-accel = 0.2
-speed = 2
+accel = 0.1
+speed = 1
 target_vx = 0
 target_vy = 0
 cur_vx = 0
@@ -183,9 +189,9 @@ function _init()
 	buckets = {}
 	hearts = {}
 	
-	pl = make_player(0,rnd(64),rnd(64),4)
+	pl = make_player(0,rnd(map_size),rnd(map_size),start_size)
 
-	add_hearts(30)
+	add_hearts(50)
 end
 
 function make_player(id,x,y,r)
@@ -320,9 +326,9 @@ function _draw()
 	line(mx-4,my,mx+4,my,7)
 	line(mx,my-4,mx,my+4,7)
 	
-	print("%cpu: "..stat(1),1,1,7)
-	print("#col: "..num_collisions,1,7,7)
-	print("mode: "..(hash_mode and "hash" or "naive"),1,14,7)
+	print("%cpu: "..stat(1),cam_x+1,cam_y+1,7)
+	print("#col: "..num_collisions,cam_x+1,cam_y+7,7)
+	print("mode: "..(hash_mode and "hash" or "naive"),cam_x+1,cam_y+14,7)
 	--[[
 	for col = 0, 127, cell_size do
 		line(col, 0, col, 127, 10)
