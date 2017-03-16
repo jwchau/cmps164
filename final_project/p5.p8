@@ -158,59 +158,93 @@ function query(q)
 	end
 end
 
+map_size = 2^(8)
+--acceleration stuff
+accel = 0.2
+speed = 2
+target_vx = 0
+target_vy = 0
+cur_vx = 0
+cur_vy = 0
+
 function add_hearts(n)
 	for i = 1,n do
 		add(hearts,{
-					x=rnd(map_size-128)+64,
-					y=rnd(map_size-128)+64,
+					x=rnd(map_size),
+					y=rnd(map_size),
 					r=2+rnd(8)*rnd(1),
 				})
 		end
 end
 
 function _init()
-
 	poke(0x5f2d, 1) -- enable mouse
 
 	buckets = {}
 	hearts = {}
 	
-	pl = make_player(0,0,0)
+	pl = make_player(0,rnd(64),rnd(64),4)
 
-	add_hearts(10)
-	
+	add_hearts(30)
 end
 
-function make_player(x,y,id)
+function make_player(id,x,y,r)
  local pl = {}
+ pl.id = id
  pl.x = x
  pl.y = y
- pl.id = id
+ pl.r = r
  add(hearts,pl)
  return pl
 end
 
-function player_draw()
-	cam_x = mid(0,pl.x*8-64,map_size-128)
-	cam_y = mid(0,pl.y*8-64,map_size-128)
-	--camera(cam_x,cam_y)
+function camera_move()
+	cam_x = flr(pl.x-64)
+	cam_y = flr(pl.y-64)
 end
 
 function player_movement()
-	if (btn(0)) then pl.x=pl.x-1 end
-	if (btn(1)) then pl.x=pl.x+1 end
-	if (btn(2)) then pl.y=pl.y-1 end
-	if (btn(3)) then pl.y=pl.y+1 end
+
+	if (btn(0)) then
+		target_vx = -speed
+	elseif (btn(1)) then 
+		target_vx = speed
+	else
+		target_vx = 0
+	end
+	
+	if (btn(2)) then 
+		target_vy = -speed
+	elseif (btn(3)) then 
+		target_vy = speed
+	else
+		target_vy = 0
+	end
+	
+ if (cur_vx<target_vx) then 
+ 	cur_vx+=accel
+	elseif (cur_vx>target_vx) then 
+		cur_vx-=accel 
+	end
+	
+	if (cur_vy<target_vy) then 
+		cur_vy+=accel
+	elseif (cur_vy>target_vy) then 
+		cur_vy-=accel 
+	end
+	
+	pl.x+=cur_vx
+	pl.y+=cur_vy
+	camera_move()
 end
 
-function draw_grid()
- for i=0,map_size,16 do
- 	line(i,0,i,map_size)
- 	line(0,i,map_size,i)
+function draw_grid(c)
+ for i=0,map_size,32 do
+ 	line(i,0,i,map_size,c)
+ 	line(0,i,map_size,i,c)
  end
 end
 
-map_size = 2^(10)
 last_ms = 0
 selected = nil
 
@@ -257,19 +291,18 @@ function _update60()
 		selected.y += k*(my-selected.y)
 	end
 
-	for h in all(hearts) do
-		h.x = mid(h.r, h.x, 128-h.r)
-		h.y = mid(h.r, h.y, 128-h.r)
-	end
-	
+	--for h in all(hearts) do
+	--	h.x = mid(h.r, h.x, 128-h.r)
+	--	h.y = mid(h.r, h.y, 128-h.r)
+	--end
 end
 
 function _draw()
 	cls(0)
 	palt(11)
 	
-	draw_grid()
-	player_draw()
+	draw_grid(6)
+	camera(cam_x,cam_y)
 	
 	for h in all(hearts) do
 		sspr(16,0,16,16,h.x-h.r,h.y-h.r,h.r*2,h.r*2)
@@ -308,6 +341,7 @@ function _draw()
 	foreach(debug_log, print)
 	debug_log = {}
 end
+
 __gfx__
 00000000000000000000000bbbb00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000bbbbbbbb000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
